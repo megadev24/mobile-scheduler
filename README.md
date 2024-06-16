@@ -35,7 +35,7 @@ There were a few things I wanted to address
   - I added the ability to delete the db and refresh the view with what the default data was so I could test different levels of the DB with little amounts of data to some.
   - There is slight theming in there thanks to MUI and it's ease of use and setup
 
-#### Thansks!
+#### Thanks!
 
 
  
