@@ -1,15 +1,27 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import reportWebVitals from "./reportWebVitals";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { StateProvider } from "./contexts/StateContext";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import theme from "./theme";
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider theme={theme}>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <CssBaseline />
+        <StateProvider>
+          <App />
+        </StateProvider>
+      </LocalizationProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

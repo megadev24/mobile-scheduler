@@ -1,26 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useRef, useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import UserPage from "./pages/UserPage";
+import IndexedDB from "./indexedDB";
 
-function App() {
+const App: React.FC = () => {
+  const [db, setDb] = useState<IndexedDB | null>(null);
+  const isInitializedRef = useRef(false);
+
+  const initializeDB = async () => {
+    console.log("Initializing database");
+    try {
+      const indexedDBInstance = new IndexedDB();
+      await indexedDBInstance.initializeDatabase();
+      setDb(indexedDBInstance);
+    } catch (error) {
+      console.error("Error initializing database:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isInitializedRef.current === false) {
+      initializeDB();
+      isInitializedRef.current = true;
+    }
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage db={db} />} />
+        <Route
+          path="/user/:userId"
+          element={
+            <UserPage db={db} setDb={setDb} intializeDB={initializeDB} />
+          }
+        />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
