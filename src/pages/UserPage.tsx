@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { User } from "../types";
 import MobileHeader from "../components/MobileHeader";
 import PendingReservations from "../components/PendingReservations";
-import ScheduleSettter from "../components/ScheduleSetter";
+import ScheduleSetter from "../components/ScheduleSetter";
 import ProviderSelector from "../components/ProviderSelector";
 import ReservationSetter from "../components/ReservationSetter";
 import ScheduleInsights from "../components/ScheduleInsights";
@@ -14,44 +14,42 @@ import useAvailability from "../hooks/useUserAvailability";
 interface UserPageProps {
   db: IndexedDB | null;
   setDb: (db: IndexedDB) => void;
-  intializeDB: () => void;
+  initializeDB: () => void;
 }
 
-const UserPage: React.FC<UserPageProps> = ({ db, setDb, intializeDB }) => {
+const UserPage: React.FC<UserPageProps> = ({ db, setDb, initializeDB }) => {
   const { userId } = useParams<{ userId: string }>();
   const [selectedProvider, setSelectedProvider] = useState<User | null>(null);
   const [userType, setUserType] = useState<"provider" | "client">("provider");
   const { availability, fetchAvailability } = useAvailability(db, Number(userId));
 
-  const fetchUserData = async () => {
-    if (!db) return;
-    try {
-      const user = await db.getUserById(Number(userId));
-      if (user) {
-        setUserType(user.role);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchAvailability();
+    const fetchUserData = async () => {
+      if (!db) return;
+      try {
+        const user = await db.getUserById(Number(userId));
+        if (user) {
+          setUserType(user.role);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
     fetchUserData();
-  });
+    fetchAvailability();
+  }, [db, userId, fetchAvailability]);
 
   const handleDeleteAndReinitializeDB = async () => {
     if (db) {
       await db.deleteDB();
-      intializeDB();
+      initializeDB();
     }
   };
 
   return (
     <>
-      <MobileHeader
-        handleDeleteAndReinitializeDB={handleDeleteAndReinitializeDB}
-      />
+      <MobileHeader handleDeleteAndReinitializeDB={handleDeleteAndReinitializeDB} />
       {userType === "provider" && db && (
         <Box p={2}>
           <PendingReservations
@@ -65,7 +63,7 @@ const UserPage: React.FC<UserPageProps> = ({ db, setDb, intializeDB }) => {
             availability={availability}
             fetchAvailability={fetchAvailability}
           />
-          <ScheduleSettter
+          <ScheduleSetter
             userId={Number(userId)}
             onNewAvailability={fetchAvailability}
             db={db}
@@ -78,7 +76,7 @@ const UserPage: React.FC<UserPageProps> = ({ db, setDb, intializeDB }) => {
             db={db}
             userType={userType}
             userId={Number(userId)}
-          />{" "}
+          />
           <ProviderSelector
             db={db}
             selectedProvider={selectedProvider}

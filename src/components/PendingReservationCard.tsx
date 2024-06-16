@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Card, IconButton, Typography, useTheme } from "@mui/material";
 import { Check, Close } from "@mui/icons-material";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Reservation } from "../types";
 
 interface PendingReservationCardProps {
@@ -18,9 +18,20 @@ const PendingReservationCard: React.FC<PendingReservationCardProps> = ({
   const theme = useTheme();
 
   const backgroundColor = theme.palette.secondary.main;
-  const readableDate = format(new Date(reservation.date), "MM/dd/yyyy");
-  const readableStartTime = format(new Date(reservation.startTime), "HH:mm a");
-  const readableEndTime = format(new Date(reservation.endTime), "HH:mm a");
+  const readableDate = format(parseISO(reservation.date), "MM/dd/yyyy");
+
+  const formatTime = (time: string) => {
+    try {
+      const date = new Date(`1970-01-01T${time}:00`);
+      return format(date, "hh:mm a");
+    } catch {
+      return "Invalid time";
+    }
+  };
+
+  const readableStartTime = formatTime(reservation.startTime);
+  const readableEndTime = formatTime(reservation.endTime);
+
   return (
     <Card sx={{ backgroundColor: backgroundColor, marginBottom: "4px" }}>
       <Box

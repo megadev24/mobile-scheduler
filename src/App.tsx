@@ -33,7 +33,7 @@ const App: React.FC = () => {
         <Route
           path="/user/:userId"
           element={
-            <UserPage db={db} setDb={setDb} intializeDB={initializeDB} />
+            <UserPage db={db} setDb={setDb} initializeDB={initializeDB} />
           }
         />
       </Routes>

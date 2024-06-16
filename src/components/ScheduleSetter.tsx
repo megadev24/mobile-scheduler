@@ -26,7 +26,7 @@ const ScheduleSetter: React.FC<ScheduleSetterProps> = ({
     new Date()
   );
   const [startTime, setStartTime] = React.useState<string>("08:00");
-  const [endTime, setEndTime] = React.useState<string>("05:00");
+  const [endTime, setEndTime] = React.useState<string>("17:00");
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<

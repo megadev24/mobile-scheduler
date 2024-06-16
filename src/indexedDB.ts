@@ -53,7 +53,7 @@ export default class IndexedDB {
           reservationStore.createIndex("userIds", "userIds", {
             multiEntry: true,
           });
-          reservationStore.createIndex("status", "status"); // Add status index
+          reservationStore.createIndex("status", "status");
         }
         if (!db.objectStoreNames.contains("availability")) {
           const availabilityStore = db.createObjectStore("availability", {
@@ -94,30 +94,24 @@ export default class IndexedDB {
 
       if (reservations.length === 0) {
         const now = new Date();
+        const dateStr = now.toISOString().split("T")[0];
 
-        const startTime = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          22,
-          8,
-          0,
-          0
-        );
-        const endTime = new Date(startTime.getTime() + 15 * 60 * 1000);
+        const startTime = "08:00";
+        const endTime = "08:15";
 
         await db.add("reservations", {
           name: "Test Reservation",
-          date: now.toISOString(),
-          startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          date: dateStr,
+          startTime,
+          endTime,
           status: "pending",
           userIds: [1, 2],
         });
         await db.add("reservations", {
           name: "Discuss Stuff",
-          date: now.toISOString().split("T")[0], // Ensure consistent date format
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
+          date: dateStr,
+          startTime,
+          endTime,
           status: "pending",
           userIds: [3, 2],
         });
@@ -133,20 +127,20 @@ export default class IndexedDB {
       const db = await this.dbPromise;
       const availability = await db.getAll("availability");
       if (availability.length === 0) {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toISOString().split("T")[0];
         const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
           .toISOString()
-          .slice(0, 10);
+          .split("T")[0];
 
         await db.add("availability", {
           userId: 1,
-          date: today, // Today
+          date: today,
           startTime: "09:00",
           endTime: "17:00",
         });
         await db.add("availability", {
           userId: 3,
-          date: tomorrow, // Tomorrow
+          date: tomorrow,
           startTime: "09:00",
           endTime: "14:00",
         });
@@ -224,7 +218,6 @@ export default class IndexedDB {
       const index = db.transaction("reservations").store.index("userIds");
       const allUserReservations = await index.getAll(IDBKeyRange.only(userId));
 
-      // Filter reservations by status
       const pendingReservations = allUserReservations.filter(
         (reservation) => reservation.status === "pending"
       );

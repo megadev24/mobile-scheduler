@@ -13,9 +13,9 @@ import {
   Typography,
 } from "@mui/material";
 import { MobileDatePicker } from "@mui/x-date-pickers";
-import { Availability, Reservation } from "../types";
+import { Reservation } from "../types";
 import useUserAvailability from "../hooks/useUserAvailability";
-import { format, isSameDay, parseISO } from "date-fns";
+import { addDays, format, isSameDay, parseISO } from "date-fns";
 
 interface ReservationSetterProps {
   db: IndexedDB;
@@ -30,7 +30,9 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
   providerId,
   onNewAvailability,
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    addDays(new Date(), 1)
+  );
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("08:15");
   const { availability, loading, error } = useUserAvailability(db, providerId);
@@ -43,7 +45,7 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
   >("success");
 
   const resetState = () => {
-    setSelectedDate(new Date());
+    setSelectedDate(addDays(new Date(), 1));
     setStartTime("08:00");
     setEndTime("08:15");
     setSnackbarSeverity("success");
@@ -235,7 +237,7 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
         {availability.map((avail) => (
           <ListItem key={avail.id}>
             <ListItemText
-              primary={format(new Date(avail.date), "yyyy-MM-dd")}
+              primary={format(parseISO(avail.date), "yyyy-MM-dd")}
               secondary={`${avail.startTime} - ${avail.endTime}`}
             />
           </ListItem>
