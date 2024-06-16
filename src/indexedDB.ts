@@ -229,6 +229,30 @@ export default class IndexedDB {
     }
   }
 
+  async getReservationsByDate(date: string): Promise<Reservation[]> {
+    const db = await this.dbPromise;
+    const allReservations = await db.getAll("reservations");
+    return allReservations.filter((reservation) => reservation.date === date);
+  }
+
+  async cancelReservationsByDate(date: string): Promise<void> {
+    const db = await this.dbPromise;
+    const reservations = await this.getReservationsByDate(date);
+
+    const tx = db.transaction("reservations", "readwrite");
+    const store = tx.objectStore("reservations");
+
+    const updatePromises = reservations.map(async (reservation) => {
+      if (reservation.status === "approved") {
+        reservation.status = "denied";
+        await store.put(reservation);
+      }
+    });
+
+    await Promise.all(updatePromises);
+    await tx.done;
+  }
+
   async getOverlappingReservations(
     userId: number,
     date: string,
@@ -282,9 +306,20 @@ export default class IndexedDB {
     try {
       const db = await this.dbPromise;
       await db.put("reservations", reservation);
+      this.notifyReservationUpdated();
     } catch (error) {
       console.error("Error updating reservation:", error);
     }
+  }
+
+  private reservationUpdateListeners: (() => void)[] = [];
+
+  onReservationUpdate(listener: () => void) {
+    this.reservationUpdateListeners.push(listener);
+  }
+
+  private notifyReservationUpdated() {
+    this.reservationUpdateListeners.forEach((listener) => listener());
   }
 
   async deleteReservation(id: number): Promise<void> {
@@ -355,12 +390,10 @@ export default class IndexedDB {
   }
 
   async deleteAvailability(id: number): Promise<void> {
-    try {
-      const db = await this.dbPromise;
-      await db.delete("availability", id);
-    } catch (error) {
-      console.error("Error deleting availability:", error);
-    }
+    const db = await this.dbPromise;
+    const tx = db.transaction("availability", "readwrite");
+    await tx.store.delete(id);
+    await tx.done;
   }
 
   async deleteAvailabilityByUserId(userId: number): Promise<void> {

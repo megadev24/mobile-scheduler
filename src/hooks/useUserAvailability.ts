@@ -15,7 +15,7 @@ const useUserAvailability = (db: IndexedDB | null, userId: number) => {
       setAvailability(availabilities);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch availability");
+      setError("No availability found.");
       setAvailability([]);
     } finally {
       setLoading(false);

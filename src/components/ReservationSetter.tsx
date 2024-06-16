@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import IndexedDB from "../indexedDB";
 import {
   Alert,
@@ -13,16 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 import { MobileDatePicker } from "@mui/x-date-pickers";
-import { Availability, Reservation } from "../types";
+import { Reservation } from "../types";
 import useUserAvailability from "../hooks/useUserAvailability";
-import {
-  format,
-  addDays,
-  isSameDay,
-  parseISO,
-  compareAsc,
-  isAfter,
-} from "date-fns";
+import useSoonestAvailability from "../hooks/useSoonestAvailability";
+import { addDays, format, parseISO } from "date-fns";
 
 interface ReservationSetterProps {
   db: IndexedDB;
@@ -39,13 +33,15 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     addDays(new Date(), 1)
-  );
+  ); // Default to tomorrow
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("08:15");
-  const { availability, loading, error, fetchAvailability } =
-    useUserAvailability(db, providerId);
-  const [soonestAvailability, setSoonestAvailability] =
-    useState<Availability | null>(null);
+  const { availability, loading, error } = useUserAvailability(db, providerId);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const soonestAvailability = useSoonestAvailability(
+    availability,
+    reservations
+  );
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -54,8 +50,18 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
     "success" | "error" | "info" | "warning"
   >("success");
 
+  const fetchReservations = useCallback(async () => {
+    if (!db) return;
+    const res = await db.getAllReservations();
+    setReservations(res);
+  }, [db]);
+
+  useEffect(() => {
+    fetchReservations();
+  }, [db, fetchReservations]);
+
   const resetState = () => {
-    setSelectedDate(addDays(new Date(), 1));
+    setSelectedDate(addDays(new Date(), 1)); // Reset to tomorrow
     setStartTime("08:00");
     setEndTime("08:15");
     setSnackbarSeverity("success");
@@ -131,8 +137,7 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
       const reservationId = await db.addReservation(newReservation);
       if (typeof reservationId === "number") {
         handleTimeLimit(reservationId);
-        await fetchAvailability();
-        updateSoonestAvailability();
+        onNewAvailability(); // Notify that availability has changed
       }
     }
     resetState();
@@ -161,40 +166,6 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
     setSnackbarOpen(false);
   };
 
-  const availableDates = useMemo(
-    () => availability.map((avail) => parseISO(avail.date)),
-    [availability]
-  );
-
-  const isDateAvailable = (date: Date) => {
-    return availableDates.some((avail: number | Date) =>
-      isSameDay(avail, date)
-    );
-  };
-
-  const updateSoonestAvailability = useCallback(() => {
-    if (availability.length > 0) {
-      const tomorrow = addDays(new Date(), 1);
-
-      const sortedAvailability = [...availability]
-        .filter((avail) => isAfter(parseISO(avail.date), tomorrow)) // Filter out dates that are today or earlier
-        .sort((a, b) => {
-          const dateComparison = compareAsc(parseISO(a.date), parseISO(b.date));
-          if (dateComparison !== 0) return dateComparison;
-          return a.startTime.localeCompare(b.startTime);
-        });
-
-      if (sortedAvailability.length > 0) {
-        setSoonestAvailability(sortedAvailability[0]);
-      } else {
-        setSoonestAvailability(null); // No availability found that is at least a day ahead
-      }
-    }
-  }, [availability]);
-
-  useEffect(() => {
-    updateSoonestAvailability();
-  }, [availability, updateSoonestAvailability]);
 
   return (
     <>
@@ -214,7 +185,12 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
             value={selectedDate}
             onChange={handleDatePickerChange}
             disabled={!providerId}
-            shouldDisableDate={(date) => !isDateAvailable(date)}
+            shouldDisableDate={(date) =>
+              !availability.some(
+                (avail) =>
+                  parseISO(avail.date).toDateString() === date.toDateString()
+              )
+            }
             slotProps={{
               textField: {
                 error: Boolean(errorMessage),
@@ -266,16 +242,7 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
           Submit
         </Button>
       </Box>
-      {soonestAvailability && (
-        <Box mt={2}>
-          <Typography variant="h6">Provider's Soonest Availability</Typography>
-          <Typography>
-            {format(parseISO(soonestAvailability.date), "yyyy-MM-dd")} from{" "}
-            {soonestAvailability.startTime} to {soonestAvailability.endTime}
-          </Typography>
-        </Box>
-      )}
-      <Typography variant="h6" mt={2}>
+      <Typography mt={2} variant="h4">
         Provider's Availability
       </Typography>
       {loading && <p>Loading...</p>}
@@ -303,6 +270,21 @@ const ReservationSetter: React.FC<ReservationSetterProps> = ({
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      {soonestAvailability && (
+        <Typography mt={2} variant="h6">
+          Soonest Available:{" "}
+          {format(parseISO(soonestAvailability.date), "MM-dd-yyyy")} from{" "}
+          {format(
+            parseISO(`1970-01-01T${soonestAvailability.startTime}`),
+            "hh:mm a"
+          )}{" "}
+          to{" "}
+          {format(
+            parseISO(`1970-01-01T${soonestAvailability.endTime}`),
+            "hh:mm a"
+          )}
+        </Typography>
+      )}
     </>
   );
 };

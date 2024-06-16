@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import IndexedDB from "../indexedDB";
 import { Reservation } from "../types";
 import { Box, Chip, Typography } from "@mui/material";
@@ -20,17 +20,22 @@ const PendingReservations: React.FC<PendingReservationsProps> = ({
   );
   const [showChip, setShowChip] = useState(true);
 
-  useEffect(() => {
-    const fetchPendingReservations = async () => {
-      try {
-        const reservations = await db.getPendingReservationsByUser(userId);
-        setPendingReservations(reservations);
-      } catch (error) {
-        console.error("Error fetching pending tasks:", error);
-      }
-    };
-    fetchPendingReservations();
+  const fetchPendingReservations = useCallback(async () => {
+    try {
+      const reservations = await db.getPendingReservationsByUser(userId);
+      setPendingReservations(reservations);
+    } catch (error) {
+      console.error("Error fetching pending tasks:", error);
+    }
   }, [db, userId]);
+
+  useEffect(() => {
+    fetchPendingReservations();
+
+    const intervalId = setInterval(fetchPendingReservations, 1000); // Poll every 10 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, [db, fetchPendingReservations, userId]);
 
   const handleReservationUpdate = async (updatedReservation: Reservation) => {
     try {
