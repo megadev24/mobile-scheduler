@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import IndexedDB from "../indexedDB";
 import { Reservation } from "../types";
-import { Box, Chip, Typography, ListItem, ListItemText } from "@mui/material";
+import { Box, Chip, Typography } from "@mui/material";
 import PendingReservationCard from "./PendingReservationCard";
-import { format, parseISO } from "date-fns";
 
 interface PendingReservationsProps {
   db: IndexedDB;
@@ -48,13 +47,6 @@ const PendingReservations: React.FC<PendingReservationsProps> = ({
 
   const handleDelete = () => {
     setShowChip(false);
-  };
-
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return format(date, "hh:mm a");
   };
 
   return (

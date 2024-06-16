@@ -88,15 +88,6 @@ const ScheduleSetter: React.FC<ScheduleSetterProps> = ({
   ) => {
     const newStartTime = event.target.value;
     setStartTime(newStartTime);
-
-    // // Whoops! This is the logic for clients, not providers
-    // const [hours, minutes] = newStartTime.split(":").map(Number);
-    // const endDate = new Date();
-    // endDate.setHours(hours, minutes + 15);
-
-    // // Convert the end time to
-    // const newEndTime = endDate.toTimeString().slice(0, 5);
-    // setEndTime(newEndTime);
   };
 
   const handleEndTimeChange = (
