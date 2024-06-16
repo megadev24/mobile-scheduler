@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Initial Submission
 
 Hi! This was certainly a fun project
 
