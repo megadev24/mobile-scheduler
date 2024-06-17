@@ -24,6 +24,7 @@ There were a few things I wanted to address
 
 ## My biggest qualm:
   - No matter what I tried to do, I couldnt get the "Soonest Available" time for a provider to account for the availability being reserved within the schedule. I did, however, try to catch the scenario where I user would overlap a reservation
+  - I also wish I had made a utility file for the dates right from the beginning. That would have saved me a good amount of time with formatting and researching.
 
 ## Testing:
   - I initially thought I might get to testing and adding unit tests. Ha....
